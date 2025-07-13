@@ -89,7 +89,7 @@
             const item = document.createElement('div');
             item.className = 'summary-item';
             item.innerHTML = `
-                <h3>${getCategoryIcon(category)}</h3>
+                <h3>${(category)}</h3>
                 <p>実績: <strong>${formatYen(spent)}</strong></p>
                 <p class="budget">予算: ${formatYen(budget)}</p>
                 <p>差額: <strong class="${remaining < 0 ? 'over-budget' : ''}">${formatYen(remaining)}</strong></p>
