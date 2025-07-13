@@ -1,27 +1,29 @@
+// script.js の一番上から貼り付けます
 (function() {
-    'use strict';
-<script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
+  'use strict';
 
-  // Your web app's Firebase configuration
   const firebaseConfig = {
-    apiKey: "AIzaSyAHedAobhiYqsb1OKZBPesMK2CCxFVOBRw",
-    authDomain: "thequeen-sbudget.firebaseapp.com",
-    databaseURL: "https://thequeen-sbudget-default-rtdb.firebaseio.com",
-    projectId: "thequeen-sbudget",
-    storageBucket: "thequeen-sbudget.firebasestorage.app",
-    messagingSenderId: "588036901053",
-    appId: "1:588036901053:web:133698ab8684aa8b7c8fd4"
-  };
+  apiKey: "AIzaSyAHedAobhiYqsb1OKZBPesMK2CCxFVOBRw",
+  authDomain: "thequeen-sbudget.firebaseapp.com",
+  databaseURL: "https://thequeen-sbudget-default-rtdb.firebaseio.com",
+  projectId: "thequeen-sbudget",
+  storageBucket: "thequeen-sbudget.firebasestorage.app",
+  messagingSenderId: "588036901053",
+  appId: "1:588036901053:web:133698ab8684aa8b7c8fd4"
+};
+  // ↑↑↑ コピーした最新のコードはここまで ↑↑↑
 
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-</script>
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
+  // --- Firebaseの初期化 ---
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database(); // Realtime Databaseへの参照
+
+  // --- ここからあなたのアプリの定数定義やグローバル変数 ---
+  const STORAGE_KEY = 'household_data'; // この行は、この下に続くようにします
+  let CATEGORY_ICONS = {
+    // ... このオブジェクトの中身はあなたのアプリに合わせて調整してください
+  };
+  let weeklyChart = null; // グローバル変数はそのまま
+  // ... その他のコード ...
     // --- 定数定義 ---
     const STORAGE_KEY = 'household_data';
     const MONTHLY_VARIABLE_BUDGET = 350000; // 変動費の月間予算
