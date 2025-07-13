@@ -1,6 +1,27 @@
 (function() {
     'use strict';
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
 
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyAHedAobhiYqsb1OKZBPesMK2CCxFVOBRw",
+    authDomain: "thequeen-sbudget.firebaseapp.com",
+    databaseURL: "https://thequeen-sbudget-default-rtdb.firebaseio.com",
+    projectId: "thequeen-sbudget",
+    storageBucket: "thequeen-sbudget.firebasestorage.app",
+    messagingSenderId: "588036901053",
+    appId: "1:588036901053:web:133698ab8684aa8b7c8fd4"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+</script>
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
     // --- 定数定義 ---
     const STORAGE_KEY = 'household_data';
     const MONTHLY_VARIABLE_BUDGET = 350000; // 変動費の月間予算
@@ -81,20 +102,38 @@
 
     // --- データ管理ロジック ---
     function loadData() {
-        const dataJson = localStorage.getItem(STORAGE_KEY);
-        try {
-            const data = dataJson ? JSON.parse(dataJson) : { variable: [], fixed: [] };
-            data.variable = data.variable || [];
-            data.fixed = data.fixed || [];
-            return data;
-        } catch (e) {
-            console.error('データのパースに失敗しました。', e);
-            return { variable: [], fixed: [] };
+       // **** ↓↓↓ loadData() 関数の中身を、この形に書き換えてください ↓↓↓ ****
+async function loadData() { // async を追加します
+    try {
+        // Firebaseの'expenses'という場所からデータを読み込みます
+        const snapshot = await database.ref('expenses').once('value'); // await を追加します
+        const data = snapshot.val(); // Firebaseから取得した値
+
+        // データが取得できたらそのデータを、なければ空っぽのデータを返します
+        return data ? data : { variable: [], fixed: [] };
+    } catch (error) {
+        console.error("Firebaseからのデータ読み込みエラー:", error);
+        // もしエラーが出ても、アプリが止まらないように空っぽのデータを返します
+        return { variable: [], fixed: [] };
+    }
+}
+// **** ↑↑↑ loadData() 関数はここまで書き換え ↑↑↑
         }
     }
 
     function saveData(data) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        // **** ↓↓↓ saveData(data) 関数の中身を、この形に書き換えてください ↓↓↓ ****
+function saveData(data) {
+    // 'expenses'という場所にデータをセット（保存）します
+    database.ref('expenses').set(data)
+        .then(() => {
+            console.log("データをFirebaseに保存しました！");
+        })
+        .catch((error) => {
+            console.error("Firebaseへのデータ保存エラー:", error);
+        });
+}
+// **** ↑↑↑ saveData(data) 関数はここまで書き換え ↑↑↑
     }
 
     function generateUniqueId() {
@@ -294,12 +333,28 @@
             const expenses = data[type].sort((a, b) => new Date(b.date) - new Date(a.date));
             
             expenses.forEach(expense => {
+                // 各セルにdata-label属性を追加して、CSSでラベルを表示できるようにします
                 const row = container.insertRow();
-                row.insertCell(0).textContent = expense.date;
-                row.insertCell(1).textContent = `¥${expense.amount.toLocaleString()}`;
-                row.insertCell(2).innerHTML = getCategoryIcon(expense.category) + expense.category;
-                row.insertCell(3).textContent = expense.memo;
+                let cell;
+
+                cell = row.insertCell(0);
+                cell.textContent = expense.date;
+                cell.dataset.label = 'Date';
+
+                cell = row.insertCell(1);
+                cell.textContent = `¥${expense.amount.toLocaleString()}`;
+                cell.dataset.label = 'Amount';
+
+                cell = row.insertCell(2);
+                cell.innerHTML = getCategoryIcon(expense.category) + expense.category;
+                cell.dataset.label = 'Category';
+
+                cell = row.insertCell(3);
+                cell.textContent = expense.memo;
+                cell.dataset.label = 'Memo';
+
                 const actionCell = row.insertCell(4);
+                actionCell.dataset.label = 'Actions';
                 actionCell.style.display = 'flex';
                 actionCell.style.gap = '5px';
 
@@ -430,7 +485,7 @@
     }
     
     // --- 初期化処理 ---
-    function initialize() {
+    async function initialize() {
         document.getElementById('expense-form').addEventListener('submit', handleFormSubmit);
         document.getElementById('cancel-edit-button').addEventListener('click', resetForm);
         document.querySelectorAll('input[name="expense-type"]').forEach(radio => {
@@ -440,6 +495,7 @@
         document.getElementById('date').valueAsDate = new Date();
         updateCategoryOptions();
         setupTabs();
+        await loadData(); //
         renderAll();
     }
 
