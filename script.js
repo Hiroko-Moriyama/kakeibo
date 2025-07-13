@@ -18,6 +18,9 @@
 
     // --- 定数定義 ---
     const MONTHLY_VARIABLE_BUDGET = 350000;
+    // 収入の目安を追加します。将来的には入力フォームから設定できるように拡張も可能です。
+    const ESTIMATED_MONTHLY_INCOME = 1910000;
+
     const MONTHLY_FIXED_BUDGETS = {
         '住宅ローン①': 77041, '住宅ローン②': 132925, '保険': 38652, '管理費': 43290, 'AIC': 13860, '車ローン': 81130, '早稲田アカデミー': 75400, '学校': 170000, 'ガス': 12000, 'タップ': 8580, '水': 3974, 'ワイン': 5500, 'BEYOND': 35200, 'docomo': 19000, '電気': 20000, 'ダスキン': 40000, 'ベネッセ': 5320, 'チャットGPT': 3000, 'NTT': 330, 'Google': 3380, '車保険': 30690, 'みなのクリニック': 4480, '定期': 28250, '水道／2ヶ月': 20000
     };
@@ -56,9 +59,9 @@
         const currentYear = today.getFullYear();
         const currentMonth = today.getMonth();
 
-        const filterCurrentMonth = (expenses) => expenses.filter(expense => {
-            const expenseDate = new Date(expense.date);
-            return expenseDate.getFullYear() === currentYear && expenseDate.getMonth() === currentMonth;
+        const filterCurrentMonth = (items) => items.filter(item => {
+            const itemDate = new Date(item.date);
+            return itemDate.getFullYear() === currentYear && itemDate.getMonth() === currentMonth;
         });
 
         const formatYen = (amount) => `¥${amount.toLocaleString()}`;
@@ -85,6 +88,14 @@
         const totalFixedBudget = Object.values(MONTHLY_FIXED_BUDGETS).reduce((sum, budget) => sum + budget, 0);
         document.getElementById('summary-fixed-total-budget').textContent = formatYen(totalFixedBudget);
         
+        // 固定費の合計実績と差額を計算して表示
+        const totalFixedSpent = currentMonthFixed.reduce((sum, exp) => sum + exp.amount, 0);
+        const totalFixedRemaining = totalFixedBudget - totalFixedSpent;
+        document.getElementById('summary-fixed-total-spent').textContent = formatYen(totalFixedSpent);
+        const remainingEl = document.getElementById('summary-fixed-total-remaining');
+        remainingEl.textContent = formatYen(totalFixedRemaining);
+        remainingEl.classList.toggle('over-budget', totalFixedRemaining < 0);
+
         for (const category in MONTHLY_FIXED_BUDGETS) {
             const budget = MONTHLY_FIXED_BUDGETS[category];
             const spent = currentMonthFixed
@@ -102,6 +113,10 @@
             `;
             fixedSummaryGrid.appendChild(item);
         }
+
+        // 収入サマリー
+        document.getElementById('summary-income-estimated').textContent = formatYen(ESTIMATED_MONTHLY_INCOME);
+
     }
 
     function renderWeeklySummary(data) {
@@ -163,6 +178,9 @@
 
         if (weeklyChart) weeklyChart.destroy();
 
+        // 週次予算の目安を計算 (月間予算を4週で割る)
+        const weeklyBudgetGoal = MONTHLY_VARIABLE_BUDGET / 4;
+
         weeklyChart = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -177,7 +195,31 @@
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { labels: { color: '#e0e0e0' } } },
+                plugins: {
+                    legend: { labels: { color: '#e0e0e0' } },
+                    tooltip: { mode: 'index', intersect: false },
+                    // ここからが新しい予算ラインの設定です
+                    annotation: {
+                        annotations: {
+                            budgetLine: {
+                                type: 'line',
+                                yMin: weeklyBudgetGoal,
+                                yMax: weeklyBudgetGoal,
+                                borderColor: 'rgba(220, 53, 69, 0.9)',
+                                borderWidth: 2,
+                                borderDash: [6, 6], // 線を破線にします
+                                label: {
+                                    content: `週次予算: ¥${weeklyBudgetGoal.toLocaleString()}`,
+                                    enabled: true,
+                                    position: 'end',
+                                    backgroundColor: 'rgba(220, 53, 69, 0.8)',
+                                    font: { size: 10 },
+                                    yAdjust: -10
+                                }
+                            }
+                        }
+                    }
+                },
                 scales: {
                     y: {
                         beginAtZero: true,

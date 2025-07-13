@@ -257,16 +257,14 @@
                 left: -9999px;
             }
 
-            tr {
+            tbody tr {
                 border: 1px solid var(--border-color);
                 margin-bottom: 15px;
                 border-radius: 4px;
-                background: rgba(0,0,0,0.2);
+                background: rgba(0,0,0,0.2); /* 奇数行の背景色 */
             }
-
-            /* モバイルでもリストの市松模様を維持します */
-            tr:nth-child(even) {
-                background: rgba(0,0,0,0.3);
+            tbody tr:nth-child(even) {
+                background: rgba(0,0,0,0.3); /* 偶数行の背景色 */
             }
 
             td {
@@ -323,6 +321,7 @@
             <div class="tab-container">
                 <div class="tab active" data-tab="variable-summary">Variable Expenses</div>
                 <div class="tab" data-tab="fixed-summary">Fixed Expenses</div>
+                <div class="tab" data-tab="balance-summary">Income & Balance</div>
             </div>
             <div id="variable-summary" class="tab-content active">
                 <h2>Monthly Variable Expenses (Budget: ¥350,000)</h2>
@@ -343,8 +342,22 @@
             </div>
             <div id="fixed-summary" class="tab-content">
                 <h2>Monthly Fixed Expenses (Total Budget: <span id="summary-fixed-total-budget"></span>)</h2>
+                <!-- 固定費の総合サマリーエリアを追加 -->
+                <div class="summary-grid" style="margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 25px;">
+                    <div class="summary-item"><h3>Total Spent</h3><strong id="summary-fixed-total-spent">¥0</strong></div>
+                    <div class="summary-item"><h3>Total Remaining</h3><strong id="summary-fixed-total-remaining">¥0</strong></div>
+                </div>
+
                 <div id="summary-fixed-grid" class="summary-grid">
                     <!-- 固定費サマリーはここに動的に挿入されます -->
+                </div>
+            </div>
+            <div id="balance-summary" class="tab-content">
+                <h2>Income Summary</h2>
+                <div class="summary-grid">
+                    <div class="summary-item" style="grid-column: 1 / -1; text-align: center;">
+                        <h3>Estimated Monthly Income</h3><strong id="summary-income-estimated" style="font-size: 1.8em; display: block; margin-top: 10px;">¥0</strong>
+                    </div>
                 </div>
             </div>
         </section>
@@ -406,6 +419,7 @@
         </section>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
