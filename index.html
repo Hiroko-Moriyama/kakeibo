@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Queen's Budget</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- 映画のような雰囲気のフォントに変更 -->
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        /* --- The Queen's Gambit Theme --- */
+
+        /* 色やサイズを後から変更しやすいように変数として定義します */
+        :root {
+            --chess-square-size: 60px;
+            --dark-bg: #2c2c2c;
+            --light-bg: #383838;
+            --container-bg: rgba(28, 28, 28, 0.85); /* 透明度を少し上げて背景を透けさせる */
+            --text-color: #e0e0e0;
+            --accent-color: #d4b996; /* ゴールド風のアクセントカラー */
+            --border-color: #555;
+            --danger-color: #c0392b;
+        }
+
+        body {
+            /* フォント設定 */
+            font-family: 'Lora', serif; /* 本文フォントを映画風に */
+            line-height: 1.7;
+            margin: 0;
+            padding: 40px 20px;
+            color: var(--text-color);
+            
+            /* 雰囲気のあるチェスの画像を背景に設定 */
+            background-image: 
+                linear-gradient(rgba(28, 28, 28, 0.7), rgba(28, 28, 28, 0.7)), /* テキスト可読性のためのダークオーバーレイ */
+                url('https://images.unsplash.com/photo-1529699211952-734e80c4d42b?q=80&w=1975&auto=format&fit=crop');
+            background-size: cover; /* 画面全体を覆う */
+            background-position: center; /* 中央に配置 */
+            background-attachment: fixed; /* スクロールしても背景は固定 */
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding: 30px;
+            border-radius: 8px; /* 少し丸みを増やす */
+            border: 1px solid var(--accent-color);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+
+            /* メインエリアに薄いチェス盤パターンを追加 */
+            background-color: var(--container-bg);
+            background-image: 
+                linear-gradient(45deg, rgba(255, 255, 255, 0.02) 25%, transparent 25%),
+                linear-gradient(-45deg, rgba(255, 255, 255, 0.02) 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, rgba(255, 255, 255, 0.02) 75%),
+                linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, 0.02) 75%);
+            background-size: 40px 40px; /* コンテナ内のパターンは少し小さめに */
+
+            /* 背景が透ける「すりガラス」効果 */
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px); /* Safari用 */
+        }
+
+        section {
+            background-color: transparent; /* コンテナの背景を活かす */
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+        }
+
+        h1, h2 {
+            font-family: 'Playfair Display', serif;
+            color: var(--accent-color);
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+        }
+
+        h1 {
+            text-align: center;
+            border-bottom: 2px solid var(--accent-color);
+            font-size: 36px;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            letter-spacing: 1px;
+        }
+
+        /* タイトル用のアイコンスタイルを追加 */
+        .title-icon {
+            font-size: 0.8em;
+            vertical-align: baseline;
+            opacity: 0.9;
+        }
+
+        h2 {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            font-size: 24px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        th {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--accent-color);
+            font-weight: 700;
+        }
+
+        td {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        form div { display: flex; align-items: center; margin-bottom: 15px; }
+        form label { display: inline-block; width: 100px; margin-bottom: 5px; font-weight: 700; color: #ccc; }
+        form input[type="text"], form input[type="number"], form input[type="date"], form select {
+            padding: 10px; margin-bottom: 0; border-radius: 4px; border: 1px solid var(--border-color);
+            width: calc(100% - 110px); font-family: 'Lora', serif; background-color: #333; color: var(--text-color);
+        }
+        form input[type="radio"] { margin-left: 10px; }
+        form label[for="type-variable"], form label[for="type-fixed"] { width: auto; margin-left: 5px; margin-right: 20px; }
+
+        button, #form-submit-button, #cancel-edit-button {
+            background-color: var(--accent-color); color: #1c1c1c; cursor: pointer; border: none;
+            font-size: 14px; font-weight: bold; transition: all 0.3s; padding: 8px 12px; border-radius: 4px;
+            font-family: 'Playfair Display', serif; letter-spacing: 1px;
+        }
+        button:hover, #form-submit-button:hover, #cancel-edit-button:hover {
+            background-color: #e8d1b0; box-shadow: 0 0 10px rgba(212, 185, 150, 0.5);
+        }
+        #form-submit-button { width: 100%; padding: 12px; font-size: 16px; }
+        #cancel-edit-button { background-color: #666; color: var(--text-color); width: 100%; }
+        #cancel-edit-button:hover { background-color: #777; }
+        td button { background-color: #555; color: var(--text-color); }
+        td button:hover { background-color: #666; }
+        td button[style*="c0392b"] { background-color: var(--danger-color) !important; }
+        td button[style*="c0392b"]:hover { background-color: #e74c3c !important; }
+
+        .tab-container { display: flex; border-bottom: 2px solid var(--accent-color); }
+        .tab {
+            padding: 10px 20px; cursor: pointer; background-color: #333; border: 1px solid var(--border-color);
+            border-bottom: none; margin-right: 5px; border-radius: 4px 4px 0 0; transition: all 0.3s; color: #ccc;
+        }
+        .tab.active {
+            background-color: transparent; border-bottom: 2px solid var(--container-bg);
+            margin-bottom: -2px; font-weight: bold; color: var(--accent-color);
+        }
+
+        .tab-content { display: none; padding-top: 20px; }
+        .tab-content.active { display: block; }
+
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+        .summary-item {
+            background: rgba(0,0,0,0.2); padding: 15px; border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+        .summary-item h3 {
+            margin-top: 0; font-family: 'Playfair Display', serif; color: var(--accent-color);
+            font-size: 18px; display: flex; align-items: center;
+        }
+        .summary-item p { margin: 5px 0; font-size: 14px; }
+        .summary-item strong { font-size: 1.2em; color: var(--text-color); font-weight: 700; }
+        .summary-item .budget { color: #aaa; font-size: 0.9em; }
+        .summary-item .over-budget { color: var(--danger-color); font-weight: bold; }
+
+        .weekly-summary-container {
+            margin-top: 25px; border-top: 1px solid var(--border-color); padding-top: 15px;
+        }
+        .weekly-summary-item {
+            display: flex; justify-content: space-between; padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .weekly-summary-item:last-child { border-bottom: none; }
+        .chart-container { margin-top: 25px; height: 300px; }
+
+        /* チェスの駒アイコン用のスタイル */
+        .category-icon {
+            display: inline-block;
+            width: 1.2em;
+            text-align: center;
+            margin-right: 10px;
+            font-size: 1.4em;
+            vertical-align: middle;
+            color: var(--accent-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><span class="title-icon">♔</span> The Queen's Budget <span class="title-icon">♕</span></h1>
+
+        <!-- サマリー表示エリア -->
+        <section>
+            <div class="tab-container">
+                <div class="tab active" data-tab="variable-summary">Variable Expenses</div>
+                <div class="tab" data-tab="fixed-summary">Fixed Expenses</div>
+            </div>
+            <div id="variable-summary" class="tab-content active">
+                <h2>Monthly Variable Expenses (Budget: ¥350,000)</h2>
+                <div class="summary-grid">
+                    <div class="summary-item"><h3>Remaining</h3><strong id="summary-variable-remaining">¥0</strong></div>
+                    <div class="summary-item"><h3>Daily Allowance</h3><strong id="summary-variable-daily">¥0</strong></div>
+                    <div class="summary-item"><h3>Weekly Allowance</h3><strong id="summary-variable-weekly">¥0</strong></div>
+                </div>
+
+                <!-- 週ごとの集計表示エリア -->
+                <div class="weekly-summary-container">
+                    <h3>Weekly Spending</h3>
+                    <div id="weekly-summary-list">
+                        <!-- 週ごとの集計がここに動的に挿入されます -->
+                    </div>
+                    <div class="chart-container"><canvas id="weekly-spending-chart"></canvas></div>
+                </div>
+            </div>
+            <div id="fixed-summary" class="tab-content">
+                <h2>Monthly Fixed Expenses (Total Budget: <span id="summary-fixed-total-budget"></span>)</h2>
+                <div id="summary-fixed-grid" class="summary-grid">
+                    <!-- 固定費サマリーはここに動的に挿入されます -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 入力フォーム -->
+        <section>
+            <h2 id="form-title-add">Add New Expense</h2>
+            <h2 id="form-title-edit" style="display: none; color: var(--danger-color);">Edit Expense</h2>
+            <form id="expense-form">
+                <div>
+                    <label>Type:</label>
+                    <input type="radio" id="type-variable" name="expense-type" value="variable" checked>
+                    <label for="type-variable" style="width: auto;">Variable</label>
+                    <input type="radio" id="type-fixed" name="expense-type" value="fixed">
+                    <label for="type-fixed" style="width: auto;">Fixed</label>
+                </div>
+                <div>
+                    <label for="date">Date:</label>
+                    <input type="date" id="date" required>
+                </div>
+                <div>
+                    <label for="amount">Amount:</label>
+                    <input type="number" id="amount" placeholder="e.g. 1500" required>
+                </div>
+                <div>
+                    <label for="category">Category:</label>
+                    <select id="category" required></select>
+                </div>
+                <div>
+                    <label for="memo">Memo:</label>
+                    <input type="text" id="memo" placeholder="e.g. Groceries">
+                </div>
+                <input type="hidden" id="edit-id">
+                <button type="submit" id="form-submit-button">Add Expense</button>
+                <button type="button" id="cancel-edit-button" style="display: none; margin-top: 10px;">Cancel Edit</button>
+            </form>
+        </section>
+
+        <!-- 支出一覧エリア -->
+        <section>
+            <div class="tab-container">
+                <div class="tab active" data-tab="variable-list">Variable Log</div>
+                <div class="tab" data-tab="fixed-list">Fixed Log</div>
+            </div>
+            <div id="variable-list" class="tab-content active">
+                <h2>Variable Expense Log</h2>
+                <table>
+                    <thead><tr><th>Date</th><th>Amount</th><th>Category</th><th>Memo</th><th>Actions</th></tr></thead>
+                    <tbody id="expense-list-variable"></tbody>
+                </table>
+            </div>
+            <div id="fixed-list" class="tab-content">
+                <h2>Fixed Expense Log</h2>
+                <table>
+                    <thead><tr><th>Date</th><th>Amount</th><th>Category</th><th>Memo</th><th>Actions</th></tr></thead>
+                    <tbody id="expense-list-fixed"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
