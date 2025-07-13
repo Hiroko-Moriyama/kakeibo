@@ -2,6 +2,7 @@
     'use strict';
 
     // --- Firebaseの初期化 ---
+    // あなたのFirebaseプロジェクトの設定情報を入力してください
     const firebaseConfig = {
         apiKey: "AIzaSyAHedAobhiYqsb1OKZBPesMK2CCxFVOBRw",
         authDomain: "thequeen-sbudget.firebaseapp.com",
@@ -11,6 +12,7 @@
         messagingSenderId: "588036901053",
         appId: "1:588036901053:web:133698ab8684aa8b7c8fd4"
     };
+    // Firebaseを初期化し、データベースへの参照を取得します
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
@@ -33,9 +35,10 @@
     // --- UI描画ロジック ---
     // 全てのUIをデータに基づいて再描画する
     function renderAll(data) {
+        // データが空の場合でもエラーが出ないように安全対策
         const safeData = data || { variable: [], fixed: [] };
-        safeData.variable = safeData.variable || [];
-        safeData.fixed = safeData.fixed || [];
+        safeData.variable = Array.isArray(safeData.variable) ? safeData.variable : Object.values(safeData.variable);
+        safeData.fixed = Array.isArray(safeData.fixed) ? safeData.fixed : Object.values(safeData.fixed);
 
         renderSummaries(safeData);
         renderExpenseLists(safeData);
@@ -211,9 +214,8 @@
 
     // --- フォームと状態管理 ---
     async function populateFormForEdit(type, id) {
-        const snapshot = await db.ref('expenses').once('value');
-        const data = snapshot.val() || { variable: [], fixed: [] };
-        const expense = (data[type] || []).find(exp => exp.id === id);
+        const snapshot = await db.ref(`expenses//`).once('value');
+        const expense = snapshot.val();
         if (!expense) return;
 
         document.getElementById(`type-`).checked = true;
@@ -243,13 +245,12 @@
     }
 
     // --- イベントハンドラ (Firebase操作) ---
-    async function handleFormSubmit(event) {
+    function handleFormSubmit(event) {
         event.preventDefault();
         const editId = document.getElementById('edit-id').value;
         const type = document.querySelector('input[name="expense-type"]:checked').value;
 
         const expenseData = {
-            id: editId || db.ref().push().key, // 新規作成時はFirebaseのユニークIDを生成
             date: document.getElementById('date').value,
             amount: parseFloat(document.getElementById('amount').value),
             category: document.getElementById('category').value,
@@ -261,30 +262,25 @@
             return;
         }
 
-        const snapshot = await db.ref('expenses').once('value');
-        const data = snapshot.val() || { variable: [], fixed: [] };
-        data.variable = data.variable || [];
-        data.fixed = data.fixed || [];
-
-        if (editId) {
-            const expenseIndex = data[type].findIndex(exp => exp.id === editId);
-            if (expenseIndex > -1) data[type][expenseIndex] = expenseData;
+        let idToSave = editId;
+        if (idToSave) {
+            // 編集の場合
+            expenseData.id = idToSave;
+            db.ref(`expenses//`).set(expenseData);
         } else {
-            data[type].push(expenseData);
+            // 新規作成の場合
+            const newExpenseRef = db.ref(`expenses/`).push();
+            idToSave = newExpenseRef.key;
+            expenseData.id = idToSave;
+            newExpenseRef.set(expenseData);
         }
-
-        db.ref('expenses').set(data).then(resetForm);
+        
+        resetForm();
     }
 
-    async function handleDeleteExpense(type, idToDelete) {
+    function handleDeleteExpense(type, idToDelete) {
         if (!confirm('この支出を削除してもよろしいですか？')) return;
-
-        const snapshot = await db.ref('expenses').once('value');
-        const data = snapshot.val();
-        if (!data || !data[type]) return;
-        
-        data[type] = data[type].filter(expense => expense.id !== idToDelete);
-        db.ref('expenses').set(data);
+        db.ref(`expenses//`).remove();
     }
 
     function updateCategoryOptions() {
