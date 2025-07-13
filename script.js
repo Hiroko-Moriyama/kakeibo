@@ -35,10 +35,16 @@
     // --- UI描画ロジック ---
     // 全てのUIをデータに基づいて再描画する
     function renderAll(data) {
-        // データが空の場合でもエラーが出ないように安全対策
-        const safeData = data || { variable: [], fixed: [] };
-        safeData.variable = Array.isArray(safeData.variable) ? safeData.variable : Object.values(safeData.variable);
-        safeData.fixed = Array.isArray(safeData.fixed) ? safeData.fixed : Object.values(safeData.fixed);
+        // Firebaseから受け取ったデータを安全に処理します
+        // データがnullの場合や、variable/fixedが存在しない場合も考慮します
+        const dbData = data || {};
+
+        // Firebaseのオブジェクト形式のデータを、アプリで使いやすい配列形式に変換します
+        // これにより、データが一部しか存在しない場合でもエラーなく動作します
+        const safeData = {
+            variable: dbData.variable ? Object.values(dbData.variable) : [],
+            fixed: dbData.fixed ? Object.values(dbData.fixed) : []
+        };
 
         renderSummaries(safeData);
         renderExpenseLists(safeData);
@@ -89,7 +95,7 @@
             const item = document.createElement('div');
             item.className = 'summary-item';
             item.innerHTML = `
-                <h3>${(category)}</h3>
+                <h3>${getCategoryIcon(category)}${category}</h3>
                 <p>実績: <strong>${formatYen(spent)}</strong></p>
                 <p class="budget">予算: ${formatYen(budget)}</p>
                 <p>差額: <strong class="${remaining < 0 ? 'over-budget' : ''}">${formatYen(remaining)}</strong></p>
@@ -115,9 +121,19 @@
             return new Date(date.setDate(diff));
         };
 
+        // YYYY-MM-DD形式の文字列を、タイムゾーンの影響を受けずに生成するヘルパー関数
+        const toYYYYMMDD = (date) => {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        };
+
         const weeklyExpenses = currentMonthVariableExpenses.reduce((acc, expense) => {
             const weekStartDate = getStartOfWeek(expense.date);
-            const weekStartString = weekStartDate.toISOString().split('T')[0];
+            // toISOString()は日付をUTC(協定世界時)に変換するため、日本のタイムゾーン(JST)では日付が1日ずれる原因となっていました。
+            // タイムゾーンの影響を受けないヘルパー関数を使い、ローカルの日付で週を正しく集計するように修正します。
+            const weekStartString = toYYYYMMDD(weekStartDate);
             if (!acc[weekStartString]) acc[weekStartString] = 0;
             acc[weekStartString] += expense.amount;
             return acc;
@@ -214,11 +230,11 @@
 
     // --- フォームと状態管理 ---
     async function populateFormForEdit(type, id) {
-        const snapshot = await db.ref(`expenses//`).once('value');
+        const snapshot = await db.ref(`expenses/${type}/${id}`).once('value');
         const expense = snapshot.val();
         if (!expense) return;
 
-        document.getElementById(`type-`).checked = true;
+        document.getElementById(`type-${type}`).checked = true;
         updateCategoryOptions();
         document.getElementById('date').value = expense.date;
         document.getElementById('amount').value = expense.amount;
@@ -266,10 +282,10 @@
         if (idToSave) {
             // 編集の場合
             expenseData.id = idToSave;
-            db.ref(`expenses//`).set(expenseData);
+            db.ref(`expenses/${type}/${idToSave}`).set(expenseData);
         } else {
             // 新規作成の場合
-            const newExpenseRef = db.ref(`expenses/`).push();
+            const newExpenseRef = db.ref(`expenses/${type}`).push();
             idToSave = newExpenseRef.key;
             expenseData.id = idToSave;
             newExpenseRef.set(expenseData);
@@ -280,7 +296,7 @@
 
     function handleDeleteExpense(type, idToDelete) {
         if (!confirm('この支出を削除してもよろしいですか？')) return;
-        db.ref(`expenses//`).remove();
+        db.ref(`expenses/${type}/${idToDelete}`).remove();
     }
 
     function updateCategoryOptions() {
@@ -326,7 +342,18 @@
             radio.addEventListener('change', updateCategoryOptions);
         });
         
-        document.getElementById('date').valueAsDate = new Date();
+        const dateInput = document.getElementById('date');
+        dateInput.valueAsDate = new Date();
+
+        // カレンダーアイコンだけでなく、入力フィールド全体をクリックしてもカレンダーが開くようにします。
+        // これにより、特にモバイルデバイスでの操作性が向上します。
+        dateInput.addEventListener('click', function() {
+            // showPicker()メソッドが利用可能な場合は、それを使ってカレンダーをプログラムで開きます。
+            if (typeof this.showPicker === 'function') {
+                this.showPicker();
+            }
+        });
+
         updateCategoryOptions();
         setupTabs();
     }
